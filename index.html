@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LabAI — Intelligent Lab Report Analysis</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,600;0,9..144,700;1,9..144,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f7f5f0;--white:#fff;--ink:#18160f;--ink2:#4a4438;--ink3:#9a9080;
+  --border:rgba(24,22,15,.09);--border2:rgba(24,22,15,.16);
+  --green:#1a6644;--gbg:#eaf4ee;--gborder:rgba(26,102,68,.18);
+  --amber:#8a4e08;--abg:#fef3e2;
+  --shadow:0 2px 8px rgba(0,0,0,.06),0 8px 32px rgba(0,0,0,.06);
+  --shadow-lg:0 4px 16px rgba(0,0,0,.08),0 20px 60px rgba(0,0,0,.1);
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;font-size:15px;line-height:1.65;overflow-x:hidden}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:0 40px;height:60px;display:flex;align-items:center;gap:12px;background:rgba(247,245,240,.88);backdrop-filter:blur(16px);border-bottom:1px solid var(--border)}
+.nav-logo{font-family:'Fraunces',serif;font-size:22px;font-weight:700;color:var(--ink);letter-spacing:-.5px}.nav-logo span{color:var(--green)}
+.nav-right{margin-left:auto;display:flex;gap:10px;align-items:center}
+.nav-link{font-size:13px;color:var(--ink2);text-decoration:none;padding:6px 12px;border-radius:8px;transition:all .15s}.nav-link:hover{background:rgba(24,22,15,.06)}
+.nav-cta{font-size:13px;font-weight:500;color:#fff;background:var(--green);padding:7px 18px;border-radius:9px;text-decoration:none;transition:opacity .15s}.nav-cta:hover{opacity:.86}
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:100px 24px 80px;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;width:700px;height:700px;border-radius:50%;background:radial-gradient(ellipse,rgba(26,102,68,.07),transparent 70%);top:50%;left:50%;transform:translate(-50%,-60%);pointer-events:none}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;background:var(--gbg);color:var(--green);font-size:12px;font-weight:500;letter-spacing:.04em;padding:6px 16px;border-radius:20px;border:1px solid var(--gborder);margin-bottom:28px;animation:fadeUp .6s ease both}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--green)}
+h1{font-family:'Fraunces',serif;font-size:clamp(42px,7vw,80px);font-weight:700;line-height:1.1;letter-spacing:-2px;max-width:820px;margin-bottom:24px;animation:fadeUp .6s .1s ease both}
+h1 em{font-style:italic;font-weight:300;color:var(--green)}
+.hero-sub{font-size:18px;font-weight:300;color:var(--ink2);line-height:1.75;max-width:520px;margin-bottom:52px;animation:fadeUp .6s .2s ease both}
+.entry-cards{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin-bottom:56px;animation:fadeUp .6s .3s ease both}
+.entry-card{background:#fff;border:1px solid var(--border);border-radius:20px;padding:32px 28px;width:280px;text-align:left;box-shadow:var(--shadow);cursor:pointer;transition:all .22s;text-decoration:none;color:inherit;position:relative;overflow:hidden}
+.entry-card::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .22s}
+.entry-card.user::before{background:radial-gradient(ellipse at 50% 0%,rgba(26,102,68,.05),transparent 60%)}
+.entry-card.admin::before{background:radial-gradient(ellipse at 50% 0%,rgba(138,78,8,.05),transparent 60%)}
+.entry-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg)}.entry-card:hover::before{opacity:1}
+.entry-card:hover.user{border-color:rgba(26,102,68,.3)}.entry-card:hover.admin{border-color:rgba(138,78,8,.3)}
+.card-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:16px}
+.user .card-icon{background:var(--gbg)}.admin .card-icon{background:var(--abg)}
+.card-label{font-size:11px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;font-family:'DM Mono',monospace}
+.user .card-label{color:var(--green)}.admin .card-label{color:var(--amber)}
+.card-title{font-family:'Fraunces',serif;font-size:22px;font-weight:600;letter-spacing:-.3px;margin-bottom:10px;line-height:1.2}
+.card-desc{font-size:13px;color:var(--ink2);line-height:1.65;margin-bottom:20px}
+.card-btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;padding:9px 18px;border-radius:9px;transition:all .15s}
+.user .card-btn{background:var(--green);color:#fff}.admin .card-btn{background:var(--ink);color:#fff}
+.trust-row{display:flex;gap:20px;align-items:center;flex-wrap:wrap;justify-content:center;font-size:12px;color:var(--ink3);animation:fadeUp .6s .4s ease both}
+.trust-item{display:flex;align-items:center;gap:6px}.trust-sep{width:3px;height:3px;border-radius:50%;background:var(--ink3)}
+.features-section{background:#fff;padding:96px 24px}
+.section-inner{max-width:1060px;margin:0 auto}
+.section-tag{font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--green);font-family:'DM Mono',monospace;margin-bottom:12px}
+.section-title{font-family:'Fraunces',serif;font-size:clamp(28px,4vw,44px);font-weight:600;letter-spacing:-1px;line-height:1.2;margin-bottom:16px}
+.section-sub{font-size:16px;color:var(--ink2);font-weight:300;line-height:1.7;max-width:540px;margin-bottom:52px}
+.features-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.feat{background:var(--bg);border:1px solid var(--border);border-radius:16px;padding:28px 24px}
+.feat-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:14px}
+.feat h4{font-size:15px;font-weight:500;margin-bottom:6px}
+.feat p{font-size:13px;color:var(--ink2);line-height:1.65}
+.feat:nth-child(1) .feat-icon{background:#eaf4ee}
+.feat:nth-child(2) .feat-icon{background:#eef2fb}
+.feat:nth-child(3) .feat-icon{background:#fef3e2}
+.feat:nth-child(4) .feat-icon{background:#f0edf8}
+.feat:nth-child(5) .feat-icon{background:#fdf0ee}
+.feat:nth-child(6) .feat-icon{background:#eaf4ee}
+.cta-section{background:var(--ink);color:#fff;padding:96px 24px;text-align:center}
+.cta-inner{max-width:600px;margin:0 auto}
+.cta-title{font-family:'Fraunces',serif;font-size:clamp(32px,5vw,52px);font-weight:700;letter-spacing:-1.5px;line-height:1.15;margin-bottom:16px}
+.cta-title em{font-style:italic;font-weight:300;color:#6de0aa}
+.cta-sub{font-size:16px;color:rgba(255,255,255,.55);font-weight:300;margin-bottom:40px;line-height:1.7}
+.cta-cards{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.cta-card{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:22px 24px 20px;width:220px;text-decoration:none;color:#fff;transition:all .2s;text-align:left}
+.cta-card:hover{background:rgba(255,255,255,.11);transform:translateY(-2px)}
+.cta-card.primary{background:#1a6644;border-color:#1a6644}.cta-card.primary:hover{background:#1e7a50}
+.cc-label{font-size:11px;color:rgba(255,255,255,.45);font-family:'DM Mono',monospace;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px}
+.cc-title{font-size:17px;font-weight:500;margin-bottom:6px}
+.cc-desc{font-size:12px;color:rgba(255,255,255,.5);line-height:1.5}
+.cc-arrow{margin-top:14px;font-size:18px;transition:transform .2s}.cta-card:hover .cc-arrow{transform:translateX(4px)}
+footer{background:var(--ink);border-top:1px solid rgba(255,255,255,.07);padding:32px 40px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.footer-logo{font-family:'Fraunces',serif;font-size:18px;color:rgba(255,255,255,.4)}.footer-logo span{color:#6de0aa}
+.footer-note{font-size:12px;color:rgba(255,255,255,.25)}
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:700px){nav{padding:0 20px}.entry-card{width:100%;max-width:340px}}
+</style>
+</head>
+<body>
+<nav>
+  <div class="nav-logo">Lab<span>AI</span></div>
+  <div class="nav-right">
+    <a href="#features" class="nav-link">Features</a>
+    <a href="/user" class="nav-cta">Analyze my report →</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="eyebrow"><div class="dot"></div>AI-powered · Server OCR · Free on Railway</div>
+  <h1>Your lab report,<br><em>clearly explained</em></h1>
+  <p class="hero-sub">Upload any blood test, thyroid panel, or urine report. Get a plain-language summary powered by server-side AI — no browser memory issues, handles hundreds of images.</p>
+  <div class="entry-cards">
+    <a href="/user" class="entry-card user">
+      <div class="card-icon">🔬</div>
+      <div class="card-label">For patients</div>
+      <div class="card-title">Analyze your report</div>
+      <div class="card-desc">Upload a lab report image and get an instant plain-language summary of what your results mean.</div>
+      <div class="card-btn">Get started →</div>
+    </a>
+    <a href="/admin" class="entry-card admin">
+      <div class="card-icon">⚙️</div>
+      <div class="card-label">For administrators</div>
+      <div class="card-title">Admin dashboard</div>
+      <div class="card-desc">Upload Kaggle datasets in bulk, review OCR results, train and deploy the AI model.</div>
+      <div class="card-btn">Sign in →</div>
+    </a>
+  </div>
+  <div class="trust-row">
+    <div class="trust-item">🔒 Server-side OCR — no browser memory limit</div>
+    <div class="trust-sep"></div>
+    <div class="trust-item">📦 SQLite — everything in one file</div>
+    <div class="trust-sep"></div>
+    <div class="trust-item">🚂 Free on Railway / Render</div>
+  </div>
+</section>
+
+<section class="features-section" id="features">
+  <div class="section-inner">
+    <div class="section-tag">Capabilities</div>
+    <h2 class="section-title">Built for real-world lab reports</h2>
+    <p class="section-sub">Python backend handles all the heavy lifting — OCR, preprocessing, batch jobs, model training.</p>
+    <div class="features-grid">
+      <div class="feat"><div class="feat-icon">🐍</div><h4>Python server-side OCR</h4><p>Tesseract + Pillow preprocessing runs on the server. Upload 426 images — no browser crash, no memory limit.</p></div>
+      <div class="feat"><div class="feat-icon">⚡</div><h4>Background batch jobs</h4><p>Upload hundreds of Kaggle images at once. Server processes them in the background while you watch live progress.</p></div>
+      <div class="feat"><div class="feat-icon">🗄️</div><h4>SQLite storage</h4><p>Everything in one persistent file — training data, user uploads, model weights. No external database needed.</p></div>
+      <div class="feat"><div class="feat-icon">✏️</div><h4>Admin review & edit</h4><p>After OCR, review each image's extracted values. Edit wrong numbers, delete bad rows, then approve to training.</p></div>
+      <div class="feat"><div class="feat-icon">🧠</div><h4>TF.js neural network</h4><p>Autoencoder trained in browser on server data. Deployed weights served to all users — ML scoring on every report.</p></div>
+      <div class="feat"><div class="feat-icon">🔒</div><h4>Private by design</h4><p>Images processed server-side and discarded. Only anonymized numeric values stored in SQLite.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="cta-section">
+  <div class="cta-inner">
+    <h2 class="cta-title">Ready to understand your<br><em>lab report?</em></h2>
+    <p class="cta-sub">Free, instant, and private. No account needed.</p>
+    <div class="cta-cards">
+      <a href="/user" class="cta-card primary"><div class="cc-label">Patients</div><div class="cc-title">Analyze my report</div><div class="cc-desc">Upload and get a plain-language summary</div><div class="cc-arrow">→</div></a>
+      <a href="/admin" class="cta-card"><div class="cc-label">Administrators</div><div class="cc-title">Admin dashboard</div><div class="cc-desc">Manage training data and deploy the model</div><div class="cc-arrow">→</div></a>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="footer-logo">Lab<span>AI</span></div>
+  <div class="footer-note">⚕ For informational purposes only · Not medical advice</div>
+</footer>
+</body>
+</html>

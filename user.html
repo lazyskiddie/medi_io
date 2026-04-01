@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LabAI — Understand Your Lab Report</title>
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --cream:#faf9f5;--warm:#f3f0e8;--ink:#1c1a16;--ink2:#4a4540;--ink3:#9a9080;
+  --border:rgba(28,26,22,.09);--border2:rgba(28,26,22,.17);
+  --green:#1a6644;--gbg:#eaf4ee;--gborder:rgba(26,102,68,.18);
+  --amber:#8a4e08;--abg:#fef5e6;--red:#b02c20;--rbg:#fdf0ee;--blue:#1a4f8a;--bbg:#eef3fb;
+  --shadow:0 1px 3px rgba(0,0,0,.05),0 4px 14px rgba(0,0,0,.04);
+  --shadow-lg:0 2px 8px rgba(0,0,0,.07),0 14px 44px rgba(0,0,0,.08);
+}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--cream);color:var(--ink);min-height:100vh;font-size:15px;line-height:1.65}
+header{border-bottom:1px solid var(--border);padding:0 32px;background:rgba(250,249,245,.92);backdrop-filter:blur(12px);position:sticky;top:0;z-index:50;display:flex;align-items:center;height:58px;gap:14px}
+.logo{font-family:'Lora',serif;font-size:20px;font-weight:600}.logo em{color:var(--green);font-style:normal}
+.hd{width:1px;height:18px;background:var(--border2)}.hs{font-size:12px;color:var(--ink3)}
+.hr{margin-left:auto;display:flex;align-items:center;gap:10px}
+.mpill{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink3);font-family:'DM Mono',monospace;background:var(--warm);padding:4px 11px;border-radius:20px;border:1px solid var(--border)}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--ink3);flex-shrink:0}.dot.live{background:var(--green);box-shadow:0 0 0 2px rgba(26,102,68,.18)}
+.hbtn{font-size:12px;color:var(--ink3);text-decoration:none;padding:5px 11px;border-radius:8px;border:1px solid var(--border2);transition:all .15s}.hbtn:hover{background:var(--warm)}
+.hero{max-width:600px;margin:0 auto;padding:72px 24px 44px;text-align:center}
+.badge{display:inline-flex;align-items:center;gap:7px;background:var(--gbg);color:var(--green);font-size:12px;font-weight:500;padding:5px 14px;border-radius:20px;border:1px solid var(--gborder);margin-bottom:26px}
+.bdot{width:5px;height:5px;border-radius:50%;background:var(--green)}
+h1{font-family:'Lora',serif;font-size:clamp(36px,6vw,52px);font-weight:600;line-height:1.15;letter-spacing:-1.2px;margin-bottom:16px}
+h1 em{font-style:italic;color:var(--green)}
+.hp{font-size:17px;color:var(--ink2);line-height:1.75;margin-bottom:36px;font-weight:300}
+.steps{display:flex;justify-content:center;gap:24px;font-size:12px;color:var(--ink3);flex-wrap:wrap}
+.step{display:flex;align-items:center;gap:7px}
+.sn{width:20px;height:20px;border-radius:50%;background:var(--warm);border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;color:var(--ink2);flex-shrink:0}
+.upload-section{max-width:600px;margin:0 auto 80px;padding:0 24px}
+.upload-card{background:#fff;border:1.5px dashed var(--border2);border-radius:22px;padding:52px 32px;text-align:center;cursor:pointer;transition:all .2s;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.upload-card::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% -20%,rgba(26,102,68,.04),transparent 55%);pointer-events:none}
+.upload-card:hover,.upload-card.drag{border-color:var(--green);background:#fdfffe}
+.up-icon{width:64px;height:64px;border-radius:18px;background:var(--gbg);border:1px solid var(--gborder);display:flex;align-items:center;justify-content:center;margin:0 auto 18px;font-size:28px}
+.upload-card h3{font-family:'Lora',serif;font-size:20px;font-weight:600;margin-bottom:8px}
+.upload-card p{font-size:13px;color:var(--ink3);line-height:1.6}
+.upload-note{display:inline-block;font-size:11px;color:var(--ink3);font-family:'DM Mono',monospace;background:var(--warm);padding:7px 14px;border-radius:8px;margin-top:14px}
+input[type=file]{display:none}
+.pipe{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:16px 0}
+.ps{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--ink3);font-family:'DM Mono',monospace;padding:4px 10px;background:var(--warm);border-radius:6px;border:1px solid var(--border);transition:all .3s}
+.ps.active{background:var(--gbg);color:var(--green);border-color:var(--gborder)}
+.ps.done{color:var(--green);opacity:.7}
+.pa{color:var(--ink3);font-size:10px}
+.pw{margin:14px 0}
+.pl{font-size:12px;color:var(--ink2);font-family:'DM Mono',monospace;margin-bottom:6px}
+.pb{height:3px;background:var(--warm);border-radius:2px;overflow:hidden}
+.pf{height:100%;background:var(--green);border-radius:2px;transition:width .3s}
+.sm{padding:10px 14px;border-radius:10px;font-size:13px;font-family:'DM Mono',monospace;display:none}
+.sm.show{display:block}.sm.ok{background:var(--gbg);color:var(--green)}.sm.err{background:var(--rbg);color:var(--red)}.sm.warn{background:var(--abg);color:var(--amber)}
+.result-card{background:#fff;border-radius:22px;box-shadow:var(--shadow-lg);border:1px solid var(--border);overflow:hidden;margin-top:28px;display:none;animation:up .4s ease}
+@keyframes up{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+.rh{padding:28px 30px 20px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:14px}
+.ri{width:50px;height:50px;border-radius:15px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}
+.ri.ok{background:var(--gbg)}.ri.warn{background:var(--abg)}.ri.danger{background:var(--rbg)}
+.rhl{font-family:'Lora',serif;font-size:21px;font-weight:600;line-height:1.3;margin-bottom:4px}
+.rm{font-size:12px;color:var(--ink3);font-family:'DM Mono',monospace}
+.rb{padding:28px 30px}
+.st{font-size:16px;color:var(--ink2);line-height:1.9;margin-bottom:26px;font-weight:300}
+.st strong{color:var(--ink);font-weight:500}
+.fl{font-size:11px;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--ink3);font-family:'DM Mono',monospace;margin-bottom:12px}
+.fg{display:flex;flex-direction:column;gap:10px;margin-bottom:24px}
+.pill{display:flex;gap:12px;padding:14px 16px;border-radius:13px;align-items:flex-start}
+.pill.good{background:var(--gbg)}.pill.caution{background:var(--abg)}.pill.concern{background:var(--rbg)}.pill.info{background:var(--bbg)}
+.pi{font-size:18px;flex-shrink:0;margin-top:1px}
+.pl2{font-size:13px;font-weight:500;margin-bottom:3px}
+.pl2.good{color:var(--green)}.pl2.caution{color:var(--amber)}.pl2.concern{color:var(--red)}.pl2.info{color:var(--blue)}
+.pt{font-size:13px;color:var(--ink2);line-height:1.65}
+.ab{background:var(--warm);border-radius:13px;padding:18px 20px;margin-bottom:24px}
+.at{font-size:13px;font-weight:500;color:var(--ink2);margin-bottom:10px}
+.al{list-style:none}.al li{font-size:13px;color:var(--ink2);padding:5px 0;display:flex;gap:8px;line-height:1.55}.al li::before{content:'→';color:var(--green);flex-shrink:0}
+.dtb{width:100%;background:none;border:1px solid var(--border2);border-radius:11px;padding:12px 16px;font-size:13px;color:var(--ink2);cursor:pointer;text-align:left;display:flex;align-items:center;justify-content:space-between;font-family:'DM Sans',sans-serif;transition:background .15s;margin-bottom:8px}.dtb:hover{background:var(--warm)}
+.dw{display:none;overflow-x:auto;margin-bottom:14px}
+.dt{width:100%;border-collapse:collapse;font-size:12px}.dt th{text-align:left;padding:7px 10px;border-bottom:1px solid var(--border);color:var(--ink3);font-weight:400;font-family:'DM Mono',monospace;text-transform:uppercase;font-size:10px;letter-spacing:.05em}.dt td{padding:8px 10px;border-bottom:1px solid var(--border)}.dt tr:last-child td{border:none}
+.vb{display:inline-block;padding:2px 8px;border-radius:5px;font-size:11px;font-family:'DM Mono',monospace}
+.vb.n{background:var(--gbg);color:var(--green)}.vb.h{background:var(--rbg);color:var(--red)}.vb.l{background:var(--abg);color:var(--amber)}.vb.c{background:var(--red);color:#fff}
+.dis{font-size:11px;color:var(--ink3);border-top:1px solid var(--border);padding:14px 30px;background:var(--warm);line-height:1.65}
+footer{border-top:1px solid var(--border);padding:28px 32px;text-align:center;font-size:12px;color:var(--ink3)}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">Lab<em>AI</em></div>
+  <div class="hd"></div>
+  <div class="hs">Lab Report Analyzer</div>
+  <div class="hr">
+    <div class="mpill"><div class="dot" id="mdot"></div><span id="mstatus">Loading model…</span></div>
+    <a href="/" class="hbtn">← Home</a>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="badge"><div class="bdot"></div>Server-side OCR · No browser limit</div>
+  <h1>Your lab report,<br><em>clearly explained</em></h1>
+  <p class="hp">Upload any blood test, thyroid panel, or urine report. Our server reads it and gives you a plain-language summary.</p>
+  <div class="steps">
+    <div class="step"><div class="sn">1</div>Upload image or PDF</div>
+    <div class="step"><div class="sn">2</div>Server reads & analyzes</div>
+    <div class="step"><div class="sn">3</div>Plain summary</div>
+  </div>
+</section>
+
+<div class="upload-section">
+  <div class="upload-card" id="dz" onclick="document.getElementById('fin').click()">
+    <div class="up-icon">📋</div>
+    <h3>Drop your lab report here</h3>
+    <p>or click to choose a file</p>
+    <p style="margin-top:5px">JPG · PNG · PDF · any photo of your report</p>
+    <div class="upload-note">🔒 Image processed on server · Only values are stored anonymously</div>
+  </div>
+  <input type="file" id="fin" accept="image/*,.pdf,.txt" onchange="handleUpload(event)">
+
+  <div class="pipe" id="pipe" style="display:none">
+    <div class="ps" id="ps-upload">📤 Uploading</div>
+    <div class="pa">›</div>
+    <div class="ps" id="ps-ocr">🔧 Server OCR</div>
+    <div class="pa">›</div>
+    <div class="ps" id="ps-analyze">🧠 Analyzing</div>
+    <div class="pa">›</div>
+    <div class="ps" id="ps-done">✓ Done</div>
+  </div>
+  <div class="pw" id="pw" style="display:none">
+    <div class="pl" id="pl">Uploading…</div>
+    <div class="pb"><div class="pf" id="pf" style="width:0%"></div></div>
+  </div>
+  <div class="sm" id="sm"></div>
+
+  <div class="result-card" id="rc">
+    <div class="rh">
+      <div class="ri" id="ri">📊</div>
+      <div>
+        <div class="rhl" id="rhl">Analysis complete</div>
+        <div class="rm" id="rm"></div>
+      </div>
+    </div>
+    <div class="rb">
+      <div class="st" id="rst"></div>
+      <div class="fl">What we found</div>
+      <div class="fg" id="rfg"></div>
+      <div class="ab"><div class="at">💡 What to do next</div><ul class="al" id="ral"></ul></div>
+      <button class="dtb" onclick="toggleDetail()"><span>View detailed values & ranges</span><span id="da">▼</span></button>
+      <div class="dw" id="dw">
+        <table class="dt">
+          <thead><tr><th>Test</th><th>Your value</th><th>Normal range</th><th>Status</th></tr></thead>
+          <tbody id="dtb"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="dis">⚕ For informational purposes only — not medical advice. Always consult a qualified doctor regarding your lab results.</div>
+  </div>
+</div>
+
+<footer>LabAI · Server-side AI · Private · <a href="/" style="color:var(--ink3)">Home</a></footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tensorflow/4.10.0/tf.min.js"></script>
+<script>
+// ── Reference ranges (client-side for display only) ───────────────
+const REF_CLIENT = {
+  "Hemoglobin":{lo:12,hi:17.5,unit:"g/dL"},"WBC":{lo:4,hi:11,unit:"×10³/µL"},
+  "Platelets":{lo:150,hi:400,unit:"×10³/µL"},"TSH":{lo:0.4,hi:4.0,unit:"mIU/L"},
+  "Free T4":{lo:0.8,hi:1.8,unit:"ng/dL"},"ALT":{lo:0,hi:40,unit:"U/L"},
+  "AST":{lo:0,hi:40,unit:"U/L"},"Creatinine":{lo:0.6,hi:1.2,unit:"mg/dL"},
+  "BUN":{lo:7,hi:25,unit:"mg/dL"},"eGFR":{lo:60,hi:999,unit:"mL/min"},
+  "Fasting Glucose":{lo:70,hi:100,unit:"mg/dL"},"HbA1c":{lo:0,hi:5.6,unit:"%"},
+  "Total Cholesterol":{lo:0,hi:200,unit:"mg/dL"},"LDL Cholesterol":{lo:0,hi:100,unit:"mg/dL"},
+  "HDL Cholesterol":{lo:40,hi:999,unit:"mg/dL"},"Triglycerides":{lo:0,hi:150,unit:"mg/dL"},
+  "Ferritin":{lo:12,hi:300,unit:"ng/mL"},"Sodium":{lo:136,hi:145,unit:"mEq/L"},
+  "Potassium":{lo:3.5,hi:5.0,unit:"mEq/L"},"Calcium":{lo:8.5,hi:10.5,unit:"mg/dL"},
+};
+function refStr(name){const r=REF_CLIENT[name];if(!r)return '—';return `${r.lo===0?'—':r.lo}–${r.hi>=999?'—':r.hi}`;}
+function refUnit(name){return REF_CLIENT[name]?.unit||'';}
+
+// ── ML model ──────────────────────────────────────────────────────
+let tfModel=null, featureStats=null;
+async function loadModel(){
+  try{
+    const r=await fetch('/api/model/current');
+    const d=await r.json();
+    if(!d.ok){setMUI(false,'Rule-based mode');return;}
+    featureStats=d.stats;
+    tfModel=buildAutoencoder();
+    const tensors=d.weights.map(w=>tf.tensor(w.data,w.shape));
+    tfModel.setWeights(tensors);tensors.forEach(t=>t.dispose());
+    setMUI(true,`AI model ready · v${d.version}`);
+  }catch{setMUI(false,'Rule-based mode');}
+}
+function setMUI(ok,txt){
+  document.getElementById('mdot').className='dot'+(ok?' live':'');
+  document.getElementById('mstatus').textContent=txt;
+}
+
+const FEATURE_KEYS=["Hemoglobin","WBC","Platelets","TSH","Free T4","ALT","AST","Creatinine","BUN","eGFR","Fasting Glucose","HbA1c","Total Cholesterol","LDL Cholesterol","HDL Cholesterol","Triglycerides","Ferritin","Sodium","Potassium","Calcium"];
+function buildAutoencoder(){
+  const inp=tf.input({shape:[20]});
+  let x=tf.layers.dense({units:16,activation:'relu'}).apply(inp);
+  x=tf.layers.dense({units:8,activation:'relu'}).apply(x);
+  x=tf.layers.dense({units:4,activation:'relu'}).apply(x);
+  x=tf.layers.dense({units:8,activation:'relu'}).apply(x);
+  x=tf.layers.dense({units:16,activation:'relu'}).apply(x);
+  const out=tf.layers.dense({units:20,activation:'linear'}).apply(x);
+  const m=tf.model({inputs:inp,outputs:out});
+  m.compile({optimizer:tf.train.adam(0.001),loss:'meanSquaredError'});
+  return m;
+}
+function getMLScore(values){
+  if(!tfModel||!featureStats)return null;
+  try{
+    const means=featureStats.means,stds=featureStats.stds;
+    const row=FEATURE_KEYS.map((k,i)=>{const v=values[k]?.value??0;return(v-means[i])/(stds[i]||1);});
+    const xs=tf.tensor2d([row]);const recon=tfModel.predict(xs);
+    const rd=recon.dataSync();
+    const err=row.reduce((s,v,i)=>s+(v-rd[i])**2,0)/20;
+    xs.dispose();recon.dispose();
+    return Math.min(100,Math.round(err*100));
+  }catch{return null;}
+}
+
+// ── Drag & drop ───────────────────────────────────────────────────
+const dz=document.getElementById('dz');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag');if(e.dataTransfer.files[0])processFile(e.dataTransfer.files[0]);});
+function handleUpload(e){if(e.target.files[0])processFile(e.target.files[0]);}
+
+async function processFile(file){
+  document.getElementById('rc').style.display='none';
+  setStatus('');
+  document.getElementById('pipe').style.display='flex';
+  setPipe('upload');
+  showProg(true,'Uploading to server…',5);
+
+  try{
+    const fd=new FormData();
+    fd.append('file',file);
+
+    // Use XMLHttpRequest for upload progress
+    const text=await new Promise((res,rej)=>{
+      const xhr=new XMLHttpRequest();
+      xhr.open('POST','/api/ocr');
+      xhr.upload.onprogress=e=>{
+        if(e.lengthComputable){
+          const pct=Math.round(e.loaded/e.total*40);
+          showProg(true,`Uploading: ${pct*2}%`,pct);
+        }
+      };
+      xhr.onload=()=>{
+        if(xhr.status===200)res(xhr.responseText);
+        else rej(new Error(`Server error ${xhr.status}`));
+      };
+      xhr.onerror=()=>rej(new Error('Network error'));
+      xhr.send(fd);
+    });
+
+    setPipe('ocr');
+    showProg(true,'Server preprocessing + OCR…',45);
+
+    const data=JSON.parse(text);
+    if(!data.ok){
+      showProg(false);
+      document.getElementById('pipe').style.display='none';
+      setStatus('warn','⚠ '+data.error+'. Try a clearer photo with good lighting.');
+      return;
+    }
+
+    setPipe('analyze');
+    showProg(true,'Analyzing results…',88);
+
+    const mlScore=getMLScore(data.values);
+    await new Promise(r=>setTimeout(r,200));
+    setPipe('done');
+    showProg(false);
+
+    renderResult(data.values, data.flagged, data.total, mlScore, file.name);
+
+    // Silent background save
+    fetch('/api/user/save',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        filename:file.name,
+        values:Object.fromEntries(Object.entries(data.values).map(([k,v])=>[k,v.value])),
+        ml_score:mlScore
+      })
+    }).catch(()=>{});
+
+  }catch(err){
+    showProg(false);
+    document.getElementById('pipe').style.display='none';
+    setStatus('err','Something went wrong: '+err.message);
+    console.error(err);
+  }
+}
+
+function setPipe(step){
+  ['upload','ocr','analyze','done'].forEach(s=>{
+    const el=document.getElementById('ps-'+s);
+    if(el)el.className='ps'+(s===step?' active':'');
+  });
+}
+
+// ── Plain language helpers ─────────────────────────────────────────
+const PLAIN={
+  'Hemoglobin':{high:'Your hemoglobin is high — often just dehydration.',low:'Your hemoglobin is low (anemia). Blood may not carry enough oxygen. You may feel tired.'},
+  'WBC':{high:'White blood cells are high — body is likely fighting an infection.',low:'White blood cells are low — immune system may be weakened.'},
+  'Platelets':{high:'Platelet count is high. Usually not dangerous but needs monitoring.',low:'Platelet count is low — blood may have trouble clotting.'},
+  'TSH':{high:'TSH is high — thyroid may be underactive. Symptoms: fatigue, weight gain, feeling cold.',low:'TSH is low — thyroid may be overactive. Symptoms: fast heartbeat, weight loss.'},
+  'Free T4':{high:'Free T4 is high — overactive thyroid.',low:'Free T4 is low — underactive thyroid.'},
+  'ALT':{high:'ALT liver enzyme is elevated. Could mean liver stress or fatty liver.',low:''},
+  'AST':{high:'AST enzyme is elevated. Can mean liver or muscle stress.',low:''},
+  'Creatinine':{high:'Creatinine is high — kidneys may not be filtering waste well.',low:'Creatinine is low — usually not concerning.'},
+  'BUN':{high:'BUN is high — kidney stress or dehydration likely.',low:'BUN is low — can happen with liver disease or low protein diet.'},
+  'eGFR':{high:'',low:'eGFR is low — measures how well kidneys filter blood. Lower = reduced kidney function.'},
+  'Fasting Glucose':{high:'Fasting blood sugar is high. May indicate prediabetes or diabetes.',low:'Blood sugar is low (hypoglycemia). Eat something sweet and see a doctor.'},
+  'HbA1c':{high:'HbA1c is high — average blood sugar over 3 months has been elevated.',low:''},
+  'Total Cholesterol':{high:'Total cholesterol is high. Increases risk of heart disease over time.',low:''},
+  'LDL Cholesterol':{high:'LDL (bad cholesterol) is high — builds up in arteries.',low:''},
+  'HDL Cholesterol':{high:'',low:'HDL (good cholesterol) is low — increases cardiovascular risk.'},
+  'Triglycerides':{high:'Triglycerides are high. Very high levels risk pancreatitis.',low:''},
+  'Ferritin':{high:'Ferritin is high — can indicate excess iron or inflammation.',low:'Ferritin is low — body iron stores depleted. Earliest sign of iron deficiency.'},
+  'Sodium':{high:'Sodium is high — often means dehydration.',low:'Sodium is low — can cause headaches, confusion. May need medical attention.'},
+  'Potassium':{high:'Potassium is high — can affect heart rhythm.',low:'Potassium is low — can cause muscle weakness and heart rhythm problems.'},
+  'Vitamin D (25-OH)':{high:'',low:'Vitamin D is low. Very common. Affects bone health, immunity, and mood.'},
+  'Vitamin B12':{high:'',low:'Vitamin B12 is low. Causes fatigue and nerve tingling.'},
+  'Uric Acid':{high:'Uric acid is high. Can lead to gout or kidney stones.',low:''},
+};
+function plainMsg(name,status){
+  const e=PLAIN[name];
+  if(!e)return status==='high'?`Your ${name} is higher than normal. Discuss with your doctor.`:`Your ${name} is lower than normal. Discuss with your doctor.`;
+  const dir=status==='high'||status==='critical'?'high':'low';
+  return e[dir]||`Your ${name} is outside the normal range. Please discuss with your doctor.`;
+}
+function plainName(name){
+  const m={'Hemoglobin':'hemoglobin','WBC':'white blood cells','Platelets':'platelets','TSH':'thyroid hormone (TSH)','Free T4':'Free T4','ALT':'liver enzyme ALT','AST':'liver enzyme AST','Creatinine':'kidney marker creatinine','BUN':'kidney waste BUN','eGFR':'kidney filtration rate','Fasting Glucose':'fasting blood sugar','HbA1c':'3-month blood sugar (HbA1c)','Total Cholesterol':'total cholesterol','LDL Cholesterol':'bad cholesterol (LDL)','HDL Cholesterol':'good cholesterol (HDL)','Triglycerides':'blood fats','Ferritin':'iron stores','Sodium':'sodium','Potassium':'potassium'};
+  return m[name]||name;
+}
+
+function renderResult(values,flagged,total,mlScore,filename){
+  const crits=Object.entries(values).filter(([,v])=>v.status==='critical');
+  const highs=Object.entries(values).filter(([,v])=>v.status==='high');
+  const lows=Object.entries(values).filter(([,v])=>v.status==='low');
+  const normals=Object.entries(values).filter(([,v])=>v.status==='normal').length;
+  const abnormal=flagged;
+
+  let ic,icon,hl;
+  if(crits.length)         {ic='danger';icon='⚠️';hl='Some results need urgent attention';}
+  else if(abnormal>total*.4){ic='warn'; icon='📊';hl='Several results are outside the normal range';}
+  else if(abnormal>0)      {ic='warn'; icon='📋';hl='Most results look normal, a few need attention';}
+  else                     {ic='ok';   icon='✅';hl='Your results look mostly normal';}
+
+  document.getElementById('ri').className=`ri ${ic}`;
+  document.getElementById('ri').textContent=icon;
+  document.getElementById('rhl').textContent=hl;
+  document.getElementById('rm').textContent=`Analyzed ${new Date().toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'})} · ${total} test${total!==1?'s':''} found`;
+
+  let sum=`Your report contains <strong>${total} lab test${total!==1?'s':''}</strong>. `;
+  if(!abnormal)sum+='All your results are within the normal range — this is a good sign.';
+  else{sum+=`<strong>${normals}</strong> ${normals===1?'is':'are'} normal and <strong>${abnormal}</strong> ${abnormal===1?'is':'are'} outside the normal range${crits.length?` (including <strong>${crits.length} critical</strong>)`:''}.`;}
+  if(mlScore!==null)sum+=mlScore<30?' The overall pattern looks similar to healthy profiles.':mlScore<60?' The overall combination shows some unusual patterns worth discussing with a doctor.':' The combination of your results is quite unusual and warrants prompt medical review.';
+  document.getElementById('rst').innerHTML=sum;
+
+  const fg=document.getElementById('rfg');fg.innerHTML='';
+  if(!abnormal){fg.innerHTML+=pill('good','✓','Everything looks normal',`All ${total} tests are within healthy reference ranges.`);return;}
+  crits.forEach(([n,v])=>fg.innerHTML+=pill('concern','🔴',`Urgent: ${plainName(n)}`,plainMsg(n,v.status)));
+  highs.slice(0,4).forEach(([n,v])=>fg.innerHTML+=pill('caution','🟡',`Elevated: ${plainName(n)}`,plainMsg(n,'high')));
+  lows.slice(0,4).forEach(([n,v])=>fg.innerHTML+=pill('caution','🟡',`Low: ${plainName(n)}`,plainMsg(n,'low')));
+
+  // Advice
+  const adv=[];
+  if(crits.length)adv.push('<strong>See a doctor as soon as possible</strong> for the critical values highlighted above.');
+  if(flagged)adv.push('Share this report with your doctor at your next visit.');
+  if(Object.keys(values).some(n=>n.includes('Glucose')||n.includes('HbA1c')))adv.push('For blood sugar: reduce sugar and refined carbs, increase physical activity.');
+  if(Object.keys(values).some(n=>n.includes('Cholesterol')||n.includes('Triglycerides')))adv.push('For cholesterol: reduce fried foods and saturated fats, increase fiber and oats.');
+  if(Object.keys(values).some(n=>n.includes('Hemoglobin')||n.includes('Ferritin')))adv.push('For anemia: iron-rich foods (lentils, spinach, meat) or prescribed supplements.');
+  if(Object.keys(values).some(n=>n.includes('TSH')||n.includes('T4')))adv.push('For thyroid: see an endocrinologist. Thyroid conditions are very manageable with treatment.');
+  if(Object.keys(values).some(n=>n.includes('Vitamin')))adv.push('For vitamin deficiencies: supplements are safe and effective. Ask your doctor for the right dose.');
+  adv.push('Keep a copy of this report and track changes over time.');
+  document.getElementById('ral').innerHTML=adv.slice(0,5).map(a=>`<li>${a}</li>`).join('');
+
+  // Detail table
+  document.getElementById('dtb').innerHTML=Object.entries(values).map(([name,data])=>{
+    const bc=data.status==='critical'?'c':data.status==='high'?'h':data.status==='low'?'l':'n';
+    return `<tr><td>${name}</td><td style="font-family:'DM Mono',monospace">${data.value} ${refUnit(name)}</td><td style="font-family:'DM Mono',monospace;color:var(--ink3)">${refStr(name)}</td><td><span class="vb ${bc}">${data.status.toUpperCase()}</span></td></tr>`;
+  }).join('');
+
+  document.getElementById('rc').style.display='block';
+  document.getElementById('rc').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+function pill(type,icon,label,text){return `<div class="pill ${type}"><div class="pi">${icon}</div><div><div class="pl2 ${type}">${label}</div><div class="pt">${text}</div></div></div>`;}
+
+function toggleDetail(){
+  const w=document.getElementById('dw'),a=document.getElementById('da');
+  const open=w.style.display==='block';
+  w.style.display=open?'none':'block';a.textContent=open?'▼':'▲';
+}
+
+function showProg(show,lbl,pct){
+  document.getElementById('pw').style.display=show?'block':'none';
+  if(show){document.getElementById('pl').textContent=lbl;document.getElementById('pf').style.width=pct+'%';}
+}
+function setStatus(type,msg){
+  const el=document.getElementById('sm');
+  el.className=type?`sm show ${type}`:'sm';el.textContent=msg||'';
+}
+
+loadModel();
+</script>
+</body>
+</html>

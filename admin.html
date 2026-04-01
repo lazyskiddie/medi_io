@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>LabAI Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;1,9..144,400&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#07090d;--s1:#0d1118;--s2:#131b25;--s3:#1a2535;
+  --b1:rgba(255,255,255,.06);--b2:rgba(255,255,255,.11);
+  --t1:#d8e2f0;--t2:#6a7f96;--t3:#334455;
+  --g:#34d99a;--gd:rgba(52,217,154,.1);--gm:rgba(52,217,154,.22);
+  --r:#f04848;--rd:rgba(240,72,72,.1);
+  --a:#f0b030;--ad:rgba(240,176,48,.1);
+  --b:#4a8ef0;--bd:rgba(74,142,240,.1);
+  --p:#a04af0;--pd:rgba(160,74,240,.1);
+  --fn:'Instrument Sans',system-ui,sans-serif;
+  --fm:'DM Mono',monospace;--fd:'Fraunces',Georgia,serif;
+}
+body{font-family:var(--fn);background:var(--bg);color:var(--t1);min-height:100vh;font-size:14px}
+
+/* LOGIN */
+#login{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999}
+.lcard{background:var(--s1);border:1px solid var(--b2);border-radius:20px;padding:48px 40px;width:360px;box-shadow:0 24px 80px rgba(0,0,0,.6);text-align:center}
+.llogo{font-family:var(--fd);font-size:28px;color:var(--g);margin-bottom:5px}
+.lsub{font-size:11px;color:var(--t3);font-family:var(--fm);letter-spacing:.06em;text-transform:uppercase;margin-bottom:32px}
+.linput{width:100%;padding:11px 14px;background:var(--s2);border:1px solid var(--b2);border-radius:10px;color:var(--t1);font-size:14px;margin-bottom:14px;outline:none;transition:border-color .15s;font-family:var(--fn)}.linput:focus{border-color:var(--g)}
+.lbtn{width:100%;padding:12px;background:var(--g);color:#07090d;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;transition:opacity .15s}.lbtn:hover{opacity:.86}
+.lerr{font-size:12px;color:var(--r);margin-top:10px;font-family:var(--fm);min-height:18px}
+.lback{display:block;margin-top:14px;font-size:12px;color:var(--t3);text-decoration:none}.lback:hover{color:var(--t2)}
+
+/* SHELL */
+#app{display:none}.shell{display:flex;min-height:100vh}
+.sb{width:228px;flex-shrink:0;background:var(--s1);border-right:1px solid var(--b1);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0}
+.sb-logo{padding:22px 20px 16px;border-bottom:1px solid var(--b1)}
+.sb-name{font-family:var(--fd);font-size:19px;color:var(--g)}
+.sb-tag{font-size:10px;color:var(--t3);font-family:var(--fm);margin-top:3px;text-transform:uppercase;letter-spacing:.08em}
+.sb-badge{background:var(--pd);color:var(--p);font-size:10px;font-family:var(--fm);padding:2px 8px;border-radius:4px;display:inline-block;margin-top:6px;border:1px solid rgba(160,74,240,.2)}
+.nav{padding:12px 10px;flex:1}
+.ns{font-size:10px;color:var(--t3);font-family:var(--fm);text-transform:uppercase;letter-spacing:.1em;padding:10px 12px 5px;margin-top:4px}
+.nb{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;cursor:pointer;color:var(--t2);font-size:13px;margin-bottom:2px;border:none;background:none;width:100%;text-align:left;transition:all .15s}
+.nb:hover{background:var(--s2);color:var(--t1)}.nb.active{background:var(--gd);color:var(--g)}
+.nb .ic{width:16px;text-align:center;font-size:14px;flex-shrink:0}
+.sb-footer{padding:14px 18px;border-top:1px solid var(--b1);font-size:11px;font-family:var(--fm);color:var(--t3)}
+.sdot{width:7px;height:7px;border-radius:50%;background:var(--t3);display:inline-block;margin-right:5px}
+.sdot.on{background:var(--g);box-shadow:0 0 6px var(--g)}
+.sdot.pulse{background:var(--a);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.sb-row{display:flex;align-items:center;margin-bottom:4px}
+.out-btn{width:100%;margin-top:8px;padding:7px;background:none;border:1px solid var(--b2);border-radius:8px;color:var(--t3);font-size:12px;cursor:pointer;font-family:var(--fn);transition:all .15s}.out-btn:hover{border-color:var(--r);color:var(--r)}
+
+.main{margin-left:228px;flex:1;padding:30px 34px;max-width:1100px}
+.panel{display:none}.panel.active{display:block}
+.page-title{font-family:var(--fd);font-size:25px;letter-spacing:-.5px;margin-bottom:4px}
+.page-sub{color:var(--t2);font-size:13px;margin-bottom:26px}
+
+.srow{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.sc{background:var(--s1);border:1px solid var(--b1);border-radius:12px;padding:16px}
+.sn{font-size:28px;font-weight:600;font-family:var(--fm);margin-bottom:2px}
+.sl{font-size:11px;color:var(--t2);text-transform:uppercase;letter-spacing:.06em}
+.sc.g .sn{color:var(--g)}.sc.r .sn{color:var(--r)}.sc.a .sn{color:var(--a)}.sc.b .sn{color:var(--b)}
+
+.card{background:var(--s1);border:1px solid var(--b1);border-radius:14px;padding:20px 24px;margin-bottom:16px}
+.ct{font-size:11px;font-family:var(--fm);text-transform:uppercase;letter-spacing:.06em;color:var(--t2);margin-bottom:14px}
+
+.uz{border:1.5px dashed var(--b2);border-radius:14px;padding:36px 24px;text-align:center;cursor:pointer;background:var(--s1);transition:all .2s;position:relative;overflow:hidden}
+.uz::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(52,217,154,.04),transparent 55%);pointer-events:none}
+.uz:hover,.uz.drag{border-color:var(--gm);background:var(--s2)}
+.ui{width:50px;height:50px;border-radius:12px;background:var(--s2);border:1px solid var(--b2);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;font-size:22px}
+.uz h3{font-size:15px;font-weight:500;margin-bottom:5px}.uz p{font-size:13px;color:var(--t2)}
+.hint{font-size:11px;color:var(--t3);font-family:var(--fm);margin-top:10px;padding:6px 12px;background:var(--s2);border-radius:6px;display:inline-block}
+input[type=file]{display:none}
+
+.pw{margin:12px 0}.pl{font-size:11px;color:var(--t2);font-family:var(--fm);margin-bottom:6px}
+.pb{height:4px;background:var(--s3);border-radius:2px;overflow:hidden}
+.pf{height:100%;background:var(--g);border-radius:2px;transition:width .3s}
+
+.st{padding:10px 14px;border-radius:9px;font-size:12px;font-family:var(--fm);margin:10px 0;display:none}
+.st.show{display:block}
+.st.ok{background:var(--gd);color:var(--g);border:1px solid var(--gm)}.st.err{background:var(--rd);color:var(--r)}.st.warn{background:var(--ad);color:var(--a)}.st.info{background:var(--bd);color:var(--b)}
+
+.btn{padding:9px 18px;border-radius:9px;font-size:13px;font-family:var(--fn);font-weight:500;cursor:pointer;border:1px solid var(--b2);background:var(--s2);color:var(--t1);transition:all .15s}
+.btn:hover{background:var(--s3)}.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn.primary{background:var(--g);color:#07090d;border-color:transparent;font-weight:600}.btn.primary:hover{opacity:.85}
+.btn.danger{border-color:var(--r);color:var(--r)}.btn.danger:hover{background:var(--rd)}
+.brow{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px;align-items:center}
+
+/* BATCH PROGRESS */
+.batch-overview{background:var(--s2);border:1px solid var(--b1);border-radius:12px;padding:16px 20px;margin:14px 0}
+.batch-nums{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px}
+.bn{text-align:center}.bn .num{font-size:22px;font-weight:600;font-family:var(--fm)}.bn .lbl{font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.06em}
+.bn.g .num{color:var(--g)}.bn.a .num{color:var(--a)}.bn.r .num{color:var(--r)}.bn.b .num{color:var(--b)}
+
+/* REVIEW QUEUE */
+.review-list{max-height:500px;overflow-y:auto;margin-top:12px}
+.review-item{background:var(--s1);border:1px solid var(--b1);border-radius:10px;margin-bottom:8px;overflow:hidden;transition:border-color .2s}
+.review-item.ready{border-color:var(--gm)}
+.ri-header{display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer}
+.ri-name{flex:1;font-size:12px;font-family:var(--fm);color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ri-count{font-size:11px;font-family:var(--fm)}
+.ri-badge{font-size:10px;padding:2px 8px;border-radius:4px;font-family:var(--fm)}
+.ri-badge.waiting{background:var(--s2);color:var(--t3)}.ri-badge.processing{background:var(--ad);color:var(--a)}.ri-badge.ready{background:var(--gd);color:var(--g)}.ri-badge.saved{background:var(--gm);color:var(--g);font-weight:600}.ri-badge.skipped{background:var(--rd);color:var(--r)}.ri-badge.failed{background:var(--rd);color:var(--r)}
+.ri-body{display:none;padding:12px 14px;border-top:1px solid var(--b1);background:var(--s2)}
+.ri-body.open{display:block}
+
+/* EDITABLE PREVIEW TABLE */
+.etbl{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:10px}
+.etbl th{font-family:var(--fm);font-size:10px;color:var(--t3);text-align:left;padding:6px 8px;border-bottom:1px solid var(--b1);font-weight:400;text-transform:uppercase;letter-spacing:.06em}
+.etbl td{padding:6px 8px;border-bottom:1px solid var(--b1);vertical-align:middle}
+.etbl tr:last-child td{border:none}
+.etbl tr.flagged td{background:rgba(240,72,72,.04)}
+.ev{width:80px;padding:4px 7px;background:var(--s3);border:1px solid var(--b2);border-radius:6px;color:var(--t1);font-size:11px;font-family:var(--fm);outline:none;transition:border-color .15s}.ev:focus{border-color:var(--g)}
+.del-row{padding:3px 7px;font-size:10px;border:1px solid var(--r);border-radius:4px;background:none;color:var(--r);cursor:pointer;font-family:var(--fm)}.del-row:hover{background:var(--rd)}
+.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:4px;font-size:10px;font-family:var(--fm);font-weight:500}
+.badge.n{background:var(--gd);color:var(--g)}.badge.h{background:rgba(240,72,72,.15);color:var(--r)}.badge.l{background:var(--ad);color:var(--a)}.badge.c{background:var(--r);color:#fff}
+.ri-actions{display:flex;gap:8px}
+
+/* TABLES */
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{font-family:var(--fm);font-size:10px;color:var(--t3);text-align:left;padding:7px 12px;border-bottom:1px solid var(--b1);font-weight:400;text-transform:uppercase;letter-spacing:.06em}
+.tbl td{padding:11px 12px;border-bottom:1px solid var(--b1);font-size:13px;vertical-align:middle}.tbl tr:last-child td{border:none}.tbl tr:hover td{background:var(--s2)}
+.urow{cursor:pointer}.udetail{display:none;background:var(--s2)}.udetail td{padding:10px 20px 14px;font-size:12px;font-family:var(--fm);color:var(--t2);line-height:2}
+.empty{text-align:center;padding:36px;color:var(--t3);font-size:13px}
+.log-wrap{max-height:220px;overflow-y:auto;font-family:var(--fm);font-size:12px;color:var(--t2);line-height:2}
+.rt{width:100%;border-collapse:collapse;font-size:12px}.rt th{font-family:var(--fm);font-weight:400;color:var(--t3);text-align:left;padding:5px 10px;border-bottom:1px solid var(--b1);font-size:10px;text-transform:uppercase;letter-spacing:.06em}.rt td{padding:6px 10px;border-bottom:1px solid var(--b1);color:var(--t2)}.rt td:first-child{color:var(--t1);font-weight:500}.rt tr:last-child td{border:none}
+</style>
+</head>
+<body>
+
+<div id="login">
+  <div class="lcard">
+    <div class="llogo">LabAI</div>
+    <div class="lsub">Admin · Restricted</div>
+    <label style="font-size:11px;color:var(--t2);text-align:left;display:block;margin-bottom:6px;font-family:var(--fm);text-transform:uppercase;letter-spacing:.05em">Password</label>
+    <input class="linput" type="password" id="pw" placeholder="Enter admin password">
+    <button class="lbtn" onclick="login()">Sign in →</button>
+    <div class="lerr" id="lerr"></div>
+    <a href="/" class="lback">← Back to home</a>
+  </div>
+</div>
+
+<div id="app">
+<div class="shell">
+  <aside class="sb">
+    <div class="sb-logo">
+      <div class="sb-name">LabAI</div>
+      <div class="sb-tag">Admin Dashboard</div>
+      <div class="sb-badge">● ADMIN</div>
+    </div>
+    <nav class="nav">
+      <div class="ns">Overview</div>
+      <button class="nb active" onclick="go('dash',this)"><span class="ic">📊</span>Dashboard</button>
+      <div class="ns">Training</div>
+      <button class="nb" onclick="go('upload',this)"><span class="ic">🧬</span>Batch Upload</button>
+      <button class="nb" onclick="go('review',this)"><span class="ic">✏️</span>Review Queue</button>
+      <button class="nb" onclick="go('saved',this)"><span class="ic">🗂</span>Saved Data</button>
+      <button class="nb" onclick="go('deploy',this)"><span class="ic">🧠</span>Train & Deploy</button>
+      <div class="ns">Data</div>
+      <button class="nb" onclick="go('uploads',this)"><span class="ic">📥</span>User Uploads</button>
+      <button class="nb" onclick="go('ranges',this)"><span class="ic">📋</span>Reference Ranges</button>
+    </nav>
+    <div class="sb-footer">
+      <div class="sb-row"><span class="sdot on"></span><span>Server connected</span></div>
+      <div class="sb-row" style="margin-top:4px"><span class="sdot" id="m-dot"></span><span id="m-txt">No model</span></div>
+      <div style="margin-top:6px;color:var(--t3)" id="sb-counts"></div>
+      <button class="out-btn" onclick="location.href='/'">← Home</button>
+      <button class="out-btn" style="margin-top:6px" onclick="adminToken=null;document.getElementById('app').style.display='none';document.getElementById('login').style.display='flex'">Logout</button>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <!-- DASHBOARD -->
+    <div class="panel active" id="panel-dash">
+      <h1 class="page-title">Dashboard</h1>
+      <p class="page-sub">Live system overview · Python Flask + SQLite backend</p>
+      <div class="srow">
+        <div class="sc b"><div class="sn" id="d-uploads">—</div><div class="sl">User uploads</div></div>
+        <div class="sc g"><div class="sn" id="d-training">—</div><div class="sl">Training records</div></div>
+        <div class="sc a"><div class="sn" id="d-ver">—</div><div class="sl">Model version</div></div>
+        <div class="sc r"><div class="sn" id="d-flagged">—</div><div class="sl">Reports flagged</div></div>
+      </div>
+      <div class="card">
+        <div class="ct">Recent user uploads</div>
+        <table class="tbl">
+          <thead><tr><th>File</th><th>Tests</th><th>Flagged</th><th>ML score</th><th>Time</th></tr></thead>
+          <tbody id="d-tbody"><tr><td colspan="5" class="empty">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- BATCH UPLOAD -->
+    <div class="panel" id="panel-upload">
+      <h1 class="page-title">Batch Upload</h1>
+      <p class="page-sub">Upload hundreds of Kaggle images — server processes them all in the background with no browser memory issues</p>
+
+      <div class="card" style="border-color:rgba(52,217,154,.15)">
+        <div class="ct">Server-side OCR pipeline</div>
+        <div style="font-size:12px;color:var(--t2);font-family:var(--fm);line-height:1.9">
+          Every image → <span style="color:var(--g)">Pillow preprocessing</span> → <span style="color:var(--g)">Contrast 1.8×</span> → <span style="color:var(--g)">Unsharp mask sharpening</span> → <span style="color:var(--g)">Tesseract OCR (PSM 6)</span> → <span style="color:var(--g)">Value parser</span><br>
+          No browser memory limit · 426 images processed in the background · Review each result after processing
+        </div>
+      </div>
+
+      <div class="uz" id="udz" onclick="document.getElementById('ufin').click()">
+        <div class="ui">🧬</div>
+        <h3>Upload Kaggle lab report images</h3>
+        <p>Select hundreds of files — all processed server-side</p>
+        <div class="hint">JPG · PNG · PDF · server OCRs each one in background</div>
+      </div>
+      <input type="file" id="ufin" accept="image/*,.pdf,.txt" multiple onchange="handleBatchUpload(event)">
+
+      <div class="pw" id="upload-pw" style="display:none">
+        <div class="pl" id="upload-pl">Uploading…</div>
+        <div class="pb"><div class="pf" id="upload-pf" style="width:0%"></div></div>
+      </div>
+      <div class="st" id="upload-st"></div>
+
+      <!-- LIVE BATCH PROGRESS -->
+      <div id="batch-progress-wrap" style="display:none;margin-top:16px">
+        <div class="batch-overview">
+          <div class="batch-nums">
+            <div class="bn b"><div class="num" id="bj-total">0</div><div class="lbl">Total</div></div>
+            <div class="bn"><div class="num" id="bj-processed">0</div><div class="lbl">Processed</div></div>
+            <div class="bn g"><div class="num" id="bj-ready">0</div><div class="lbl">Ready to review</div></div>
+            <div class="bn g"><div class="num" id="bj-saved">0</div><div class="lbl">Saved</div></div>
+            <div class="bn a"><div class="num" id="bj-skipped">0</div><div class="lbl">Skipped</div></div>
+          </div>
+          <div class="pb"><div class="pf" id="bj-fill" style="width:0%"></div></div>
+          <div style="margin-top:8px;font-size:11px;color:var(--t3);font-family:var(--fm)" id="bj-status-txt">Processing…</div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin:12px 0 8px">
+          <strong style="font-size:13px">Processed items — click to review and save</strong>
+          <button class="btn" onclick="go('review',document.querySelector('.nb:nth-child(6)'))">Go to Review Queue →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- REVIEW QUEUE -->
+    <div class="panel" id="panel-review">
+      <h1 class="page-title">Review Queue</h1>
+      <p class="page-sub">Review OCR-extracted values · Edit wrong numbers · Save approved records to training data</p>
+      <div class="st" id="review-st"></div>
+      <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center">
+        <button class="btn" onclick="loadReviewQueue()">↺ Refresh</button>
+        <span style="font-size:12px;color:var(--t3);font-family:var(--fm)" id="review-counts"></span>
+      </div>
+      <div class="review-list" id="review-list"><div class="empty">No items yet — upload images first</div></div>
+    </div>
+
+    <!-- SAVED DATA -->
+    <div class="panel" id="panel-saved">
+      <h1 class="page-title">Saved Training Data</h1>
+      <p class="page-sub">All approved records stored in SQLite</p>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div id="saved-count" style="font-size:13px;color:var(--t2)">Loading…</div>
+        <button class="btn danger" onclick="clearTraining()">Clear all</button>
+      </div>
+      <div id="saved-list"></div>
+    </div>
+
+    <!-- TRAIN & DEPLOY -->
+    <div class="panel" id="panel-deploy">
+      <h1 class="page-title">Train & Deploy</h1>
+      <p class="page-sub">Fetch training vectors from server · Train TF.js model in browser · Deploy weights to server</p>
+      <div class="card"><div class="ct">Deployed model</div><div id="minfo" style="font-size:13px;color:var(--t2)">Loading…</div></div>
+      <div class="card">
+        <div class="ct">Training settings</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+          <div>
+            <label style="font-size:11px;color:var(--t2);font-family:var(--fm);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em">Data source</label>
+            <select id="dsrc" style="width:100%;padding:8px 11px;background:var(--s2);border:1px solid var(--b2);border-radius:9px;color:var(--t1);font-size:13px">
+              <option value="admin">Admin approved only</option>
+              <option value="both" selected>Admin + user uploads</option>
+              <option value="user">User uploads only</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size:11px;color:var(--t2);font-family:var(--fm);display:block;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em">Min tests per record</label>
+            <input type="number" id="mintests" value="5" min="1" style="width:100%;padding:8px 11px;background:var(--s2);border:1px solid var(--b2);border-radius:9px;color:var(--t1);font-size:13px;font-family:var(--fm)">
+          </div>
+        </div>
+        <div class="brow">
+          <button class="btn primary" id="trn-btn" onclick="trainAndDeploy()">🧠 Fetch data · Train · Deploy</button>
+          <button class="btn" onclick="loadModelInfo()">↺ Refresh</button>
+        </div>
+      </div>
+      <div class="pw" id="mpw" style="display:none"><div class="pl" id="mpl">Initializing…</div><div class="pb"><div class="pf" id="mpf" style="width:0%"></div></div></div>
+      <div class="st" id="mst"></div>
+      <div class="card" id="log-card" style="display:none"><div class="ct">Training log</div><div class="log-wrap" id="tlog"></div></div>
+    </div>
+
+    <!-- USER UPLOADS -->
+    <div class="panel" id="panel-uploads">
+      <h1 class="page-title">User Uploads</h1>
+      <p class="page-sub">Anonymous reports from users</p>
+      <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:stretch">
+        <div class="sc b" style="padding:12px 16px;flex:1;min-width:100px"><div class="sn" id="u-total" style="font-size:22px">—</div><div class="sl">Total</div></div>
+        <div class="sc a" style="padding:12px 16px;flex:1;min-width:100px"><div class="sn" id="u-flag" style="font-size:22px">—</div><div class="sl">Flagged</div></div>
+        <button class="btn danger" style="align-self:center" onclick="clearUploads()">Clear all</button>
+      </div>
+      <div class="card">
+        <div class="ct">All submissions — click to expand</div>
+        <div style="overflow-x:auto">
+          <table class="tbl" style="min-width:600px">
+            <thead><tr><th>File</th><th>Tests</th><th>Flagged</th><th>ML</th><th>Date</th><th>Preview</th></tr></thead>
+            <tbody id="u-tbody"><tr><td colspan="6" class="empty">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- RANGES -->
+    <div class="panel" id="panel-ranges">
+      <h1 class="page-title">Reference Ranges</h1>
+      <p class="page-sub">65+ clinical normal ranges</p>
+      <div id="ranges-body"></div>
+    </div>
+
+  </main>
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tensorflow/4.10.0/tf.min.js"></script>
+<script>
+// ── AUTH ──────────────────────────────────────────────────────────
+let adminToken = null;
+let currentJobId = null;
+let pollInterval = null;
+
+async function login(){
+  const pw=document.getElementById('pw').value;
+  try{
+    const r=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw})});
+    const d=await r.json();
+    if(d.ok){
+      adminToken=d.token;
+      document.getElementById('login').style.display='none';
+      document.getElementById('app').style.display='block';
+      initAdmin();
+    } else {
+      document.getElementById('lerr').textContent='Incorrect password.';
+      setTimeout(()=>document.getElementById('lerr').textContent='',2500);
+    }
+  }catch{document.getElementById('lerr').textContent='Connection error.';}
+}
+document.getElementById('pw').addEventListener('keydown',e=>{if(e.key==='Enter')login();});
+
+function ah(){return {'X-Admin-Token':adminToken,'Content-Type':'application/json'};}
+
+// ── NAV ───────────────────────────────────────────────────────────
+function go(name,btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+name).classList.add('active');
+  if(btn)btn.classList.add('active');
+  if(name==='dash')loadDash();
+  if(name==='review')loadReviewQueue();
+  if(name==='saved')loadSaved();
+  if(name==='deploy')loadModelInfo();
+  if(name==='uploads')loadUploads();
+  if(name==='ranges')renderRanges();
+}
+
+async function initAdmin(){
+  await loadDash();
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────────
+async function loadDash(){
+  try{
+    const r=await fetch('/api/admin/stats',{headers:ah()});
+    const d=await r.json();
+    document.getElementById('d-uploads').textContent=d.upload_count||0;
+    document.getElementById('d-training').textContent=d.train_count||0;
+    document.getElementById('d-flagged').textContent=d.flagged||0;
+    document.getElementById('d-ver').textContent=d.model?`v${d.model.version}`:'None';
+    document.getElementById('sb-counts').textContent=`${d.train_count||0} training · ${d.upload_count||0} user`;
+    if(d.model){setMS(`v${d.model.version} live`,'on');}
+    const tbody=document.getElementById('d-tbody');
+    if(!d.recent_uploads?.length){tbody.innerHTML='<tr><td colspan="5" class="empty">No user uploads yet</td></tr>';return;}
+    tbody.innerHTML=d.recent_uploads.map(u=>{
+      const ml=u.ml_score!=null?u.ml_score:'—',mc=ml>60?'r':ml>30?'a':'g';
+      return `<tr><td style="font-family:var(--fm);font-size:12px">${(u.filename||'—').substring(0,28)}</td>
+        <td><span class="badge n">${u.val_count||0}</span></td>
+        <td><span class="badge ${(u.flagged_cnt||0)>0?'h':'n'}">${u.flagged_cnt||0}</span></td>
+        <td>${ml!=='—'?`<span class="badge ${mc==='g'?'n':mc==='a'?'l':'h'}">${ml}</span>`:'—'}</td>
+        <td style="font-size:11px;color:var(--t3);font-family:var(--fm)">${u.created_at?new Date(u.created_at).toLocaleString():'—'}</td></tr>`;
+    }).join('');
+  }catch(e){console.error(e);}
+}
+
+function setMS(txt,s){
+  document.getElementById('m-dot').className='sdot'+(s==='on'?' on':s==='pulse'?' pulse':'');
+  document.getElementById('m-txt').textContent=txt;
+}
+
+// ── BATCH UPLOAD ──────────────────────────────────────────────────
+const udz=document.getElementById('udz');
+udz.addEventListener('dragover',e=>{e.preventDefault();udz.classList.add('drag');});
+udz.addEventListener('dragleave',()=>udz.classList.remove('drag'));
+udz.addEventListener('drop',e=>{e.preventDefault();udz.classList.remove('drag');if(e.dataTransfer.files.length)handleBatchUpload({target:{files:e.dataTransfer.files}});});
+
+async function handleBatchUpload(e){
+  const files=Array.from(e.target.files);e.target.value='';
+  if(!files.length)return;
+  const stEl=document.getElementById('upload-st');
+  const pwEl=document.getElementById('upload-pw');
+
+  setSt(stEl,'info',`Uploading ${files.length} files to server…`);
+  pwEl.style.display='block';
+
+  // Upload all files in one multipart request
+  const fd=new FormData();
+  files.forEach(f=>fd.append('files',f));
+
+  try{
+    const xhr=new XMLHttpRequest();
+    xhr.open('POST','/api/admin/batch/start');
+    xhr.setRequestHeader('X-Admin-Token',adminToken);
+    xhr.upload.onprogress=ev=>{
+      if(ev.lengthComputable){
+        const pct=Math.round(ev.loaded/ev.total*100);
+        document.getElementById('upload-pl').textContent=`Uploading: ${pct}%`;
+        document.getElementById('upload-pf').style.width=pct+'%';
+      }
+    };
+    const resp=await new Promise((res,rej)=>{
+      xhr.onload=()=>{if(xhr.status===200)res(JSON.parse(xhr.responseText));else rej(new Error(xhr.status));};
+      xhr.onerror=()=>rej(new Error('Upload failed'));
+      xhr.send(fd);
+    });
+
+    pwEl.style.display='none';
+    currentJobId=resp.job_id;
+    setSt(stEl,'ok',`✓ ${files.length} files uploaded. Server is now OCR-processing them in the background. Watch progress below.`);
+
+    document.getElementById('batch-progress-wrap').style.display='block';
+    startPolling(resp.job_id);
+
+  }catch(err){
+    pwEl.style.display='none';
+    setSt(stEl,'err','Upload failed: '+err.message);
+  }
+}
+
+function startPolling(jobId){
+  if(pollInterval)clearInterval(pollInterval);
+  pollInterval=setInterval(()=>pollJob(jobId),2000);
+  pollJob(jobId);
+}
+
+async function pollJob(jobId){
+  try{
+    const r=await fetch(`/api/admin/batch/${jobId}/status`,{headers:ah()});
+    const d=await r.json();
+    const pct=d.total>0?Math.round(d.processed/d.total*100):0;
+    document.getElementById('bj-total').textContent=d.total;
+    document.getElementById('bj-processed').textContent=d.processed;
+    const ready=d.items?d.items.filter(i=>i.status==='ready').length:0;
+    document.getElementById('bj-ready').textContent=ready;
+    document.getElementById('bj-saved').textContent=d.saved;
+    document.getElementById('bj-skipped').textContent=d.skipped;
+    document.getElementById('bj-fill').style.width=pct+'%';
+    document.getElementById('bj-status-txt').textContent=d.status==='done'?`✓ Complete — ${d.processed} processed, ${d.saved} saved`:`Processing… ${d.processed}/${d.total}`;
+    if(d.status==='done'||d.status==='error'){
+      clearInterval(pollInterval);pollInterval=null;
+      if(d.status==='done')setSt(document.getElementById('upload-st'),'ok',`✓ Batch complete — ${d.processed} processed, ${ready} ready for review.`);
+    }
+  }catch(e){console.error(e);}
+}
+
+// ── REVIEW QUEUE ──────────────────────────────────────────────────
+async function loadReviewQueue(){
+  if(!currentJobId){
+    document.getElementById('review-list').innerHTML='<div class="empty">No active batch job. Upload images first in Batch Upload.</div>';
+    return;
+  }
+  const r=await fetch(`/api/admin/batch/${currentJobId}/status`,{headers:ah()});
+  const d=await r.json();
+  const items=d.items||[];
+  const ready=items.filter(i=>i.status==='ready').length;
+  const saved=items.filter(i=>i.status==='saved').length;
+  document.getElementById('review-counts').textContent=`${ready} ready to review · ${saved} saved · ${d.skipped} skipped`;
+  const el=document.getElementById('review-list');
+  if(!items.length){el.innerHTML='<div class="empty">No items yet</div>';return;}
+  el.innerHTML=items.map((item,idx)=>`
+    <div class="review-item ${item.status==='ready'?'ready':''}" id="ri-${idx}">
+      <div class="ri-header" onclick="toggleItem(${idx})">
+        <div class="ri-name">📄 ${item.filename}</div>
+        <div class="ri-count" style="color:var(--t3);font-size:11px">${item.val_count||0} values</div>
+        <div class="ri-badge ${item.status}">${item.status}</div>
+      </div>
+      ${item.status==='ready'?`
+      <div class="ri-body" id="rib-${idx}">
+        <table class="etbl" id="etbl-${idx}">
+          <thead><tr><th>Test</th><th>Value</th><th>Status</th><th></th></tr></thead>
+          <tbody>${buildEditRows(item.values,idx)}</tbody>
+        </table>
+        <div class="ri-actions">
+          <button class="btn primary" onclick="approveItem('${item.filename}',${idx})">✓ Save to training</button>
+          <button class="btn danger" onclick="skipItem('${item.filename}',${idx})">✗ Skip</button>
+        </div>
+      </div>`:''}
+    </div>`).join('');
+}
+
+function buildEditRows(values,idx){
+  const REF={Hemoglobin:{lo:12,hi:17.5},WBC:{lo:4,hi:11},Platelets:{lo:150,hi:400},TSH:{lo:0.4,hi:4.0},
+    'Free T4':{lo:0.8,hi:1.8},ALT:{lo:0,hi:40},AST:{lo:0,hi:40},Creatinine:{lo:0.6,hi:1.2},
+    BUN:{lo:7,hi:25},eGFR:{lo:60,hi:999},'Fasting Glucose':{lo:70,hi:100},HbA1c:{lo:0,hi:5.6},
+    'Total Cholesterol':{lo:0,hi:200},'LDL Cholesterol':{lo:0,hi:100},'HDL Cholesterol':{lo:40,hi:999},
+    Triglycerides:{lo:0,hi:150},Ferritin:{lo:12,hi:300},Sodium:{lo:136,hi:145},Potassium:{lo:3.5,hi:5.0},Calcium:{lo:8.5,hi:10.5}};
+  return Object.entries(values||{}).map(([name,val],ri)=>{
+    const ref=REF[name];
+    const status=ref?(val<ref.lo?'l':val>ref.hi?'h':'n'):'n';
+    return `<tr class="${status!=='n'?'flagged':''}" id="row-${idx}-${ri}" data-name="${name}">
+      <td style="font-family:var(--fm);font-size:11px;color:var(--t1)">${name}</td>
+      <td><input class="ev" type="number" step="0.01" value="${val}" id="ev-${idx}-${ri}" onchange="updateVal(${idx},'${name}',this.value)"></td>
+      <td><span class="badge ${status}" id="badge-${idx}-${ri}">${status==='h'?'HIGH':status==='l'?'LOW':'NORMAL'}</span></td>
+      <td><button class="del-row" onclick="deleteRow(${idx},${ri},'${name}')">✕</button></td>
+    </tr>`;
+  }).join('');
+}
+
+// Track edits per item
+const editedValues={};
+function updateVal(idx,name,val){
+  if(!editedValues[idx])editedValues[idx]={};
+  editedValues[idx][name]=parseFloat(val);
+}
+function deleteRow(idx,ri,name){
+  const row=document.getElementById(`row-${idx}-${ri}`);
+  if(row)row.remove();
+  if(editedValues[idx])delete editedValues[idx][name];
+}
+
+function getItemValues(idx){
+  const rows=document.querySelectorAll(`#etbl-${idx} tbody tr`);
+  const vals={};
+  rows.forEach(row=>{
+    const name=row.dataset.name;
+    const inp=row.querySelector('input');
+    if(name&&inp){const v=parseFloat(inp.value);if(!isNaN(v)&&v>0)vals[name]=v;}
+  });
+  return vals;
+}
+
+function toggleItem(idx){
+  const body=document.getElementById(`rib-${idx}`);
+  if(body)body.classList.toggle('open');
+}
+
+async function approveItem(filename,idx){
+  const values=getItemValues(idx);
+  if(Object.keys(values).length<2){alert('Need at least 2 valid values.');return;}
+  const r=await fetch(`/api/admin/batch/${currentJobId}/item/${encodeURIComponent(filename)}/approve`,{
+    method:'POST',headers:ah(),body:JSON.stringify({values})
+  });
+  const d=await r.json();
+  if(d.ok){
+    const ri=document.getElementById(`ri-${idx}`);
+    if(ri){ri.querySelector('.ri-badge').className='ri-badge saved';ri.querySelector('.ri-badge').textContent='saved';ri.querySelector('.ri-body')?.classList.remove('open');}
+    setSt(document.getElementById('review-st'),'ok',`✓ "${filename}" saved with ${Object.keys(values).length} values.`);
+  }
+}
+
+async function skipItem(filename,idx){
+  await fetch(`/api/admin/batch/${currentJobId}/item/${encodeURIComponent(filename)}/skip`,{method:'POST',headers:ah()});
+  const ri=document.getElementById(`ri-${idx}`);
+  if(ri){ri.querySelector('.ri-badge').className='ri-badge skipped';ri.querySelector('.ri-badge').textContent='skipped';ri.querySelector('.ri-body')?.classList.remove('open');}
+}
+
+// ── SAVED DATA ────────────────────────────────────────────────────
+async function loadSaved(){
+  const r=await fetch('/api/admin/training',{headers:ah()});
+  const d=await r.json();
+  const records=d.records||[];
+  document.getElementById('saved-count').textContent=`${records.length} approved training records in SQLite`;
+  if(!records.length){document.getElementById('saved-list').innerHTML='<div class="empty">No saved training data yet.</div>';return;}
+  document.getElementById('saved-list').innerHTML=records.map(r=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 16px;background:var(--s1);border:1px solid var(--b1);border-radius:10px;margin-bottom:7px;gap:12px">
+      <div>
+        <div style="font-size:13px;font-weight:500">📄 ${r.filename||'unknown'}</div>
+        <div style="font-size:11px;color:var(--t3);font-family:var(--fm);margin-top:2px">${r.created_at?new Date(r.created_at).toLocaleDateString():'—'} · ${r.val_count} values</div>
+      </div>
+      <button class="btn danger" style="flex-shrink:0;font-size:11px;padding:5px 10px" onclick="delRecord(${r.id})">Remove</button>
+    </div>`).join('');
+}
+async function delRecord(id){
+  await fetch(`/api/admin/training/${id}`,{method:'DELETE',headers:ah()});
+  await loadSaved();
+}
+async function clearTraining(){
+  if(!confirm('Delete all admin training data?'))return;
+  // Delete all — fetch list then delete each
+  const r=await fetch('/api/admin/training',{headers:ah()});
+  const d=await r.json();
+  await Promise.all((d.records||[]).map(rec=>fetch(`/api/admin/training/${rec.id}`,{method:'DELETE',headers:ah()})));
+  await loadSaved();
+}
+
+// ── TRAIN & DEPLOY ────────────────────────────────────────────────
+const FEATURE_KEYS=["Hemoglobin","WBC","Platelets","TSH","Free T4","ALT","AST","Creatinine","BUN","eGFR","Fasting Glucose","HbA1c","Total Cholesterol","LDL Cholesterol","HDL Cholesterol","Triglycerides","Ferritin","Sodium","Potassium","Calcium"];
+
+async function loadModelInfo(){
+  const r=await fetch('/api/model/current');const d=await r.json();
+  const el=document.getElementById('minfo');
+  if(!d.ok){el.innerHTML='<span style="color:var(--t3)">No model deployed yet.</span>';setMS('No model','');return;}
+  el.innerHTML=`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+    <div><div style="font-size:10px;color:var(--t3);font-family:var(--fm);margin-bottom:3px;text-transform:uppercase">Version</div><div style="font-size:20px;font-weight:600;font-family:var(--fm);color:var(--g)">v${d.version}</div></div>
+    <div><div style="font-size:10px;color:var(--t3);font-family:var(--fm);margin-bottom:3px;text-transform:uppercase">Records</div><div style="font-size:20px;font-weight:600;font-family:var(--fm)">${d.training_size}</div></div>
+  </div>`;
+  setMS(`v${d.version} live · ${d.training_size} records`,'on');
+  document.getElementById('d-ver').textContent=`v${d.version}`;
+}
+
+function buildAutoencoder(){
+  const inp=tf.input({shape:[20]});
+  let x=tf.layers.dense({units:16,activation:'relu'}).apply(inp);
+  x=tf.layers.dense({units:8,activation:'relu'}).apply(x);x=tf.layers.dense({units:4,activation:'relu'}).apply(x);
+  x=tf.layers.dense({units:8,activation:'relu'}).apply(x);x=tf.layers.dense({units:16,activation:'relu'}).apply(x);
+  const out=tf.layers.dense({units:20,activation:'linear'}).apply(x);
+  const m=tf.model({inputs:inp,outputs:out});m.compile({optimizer:tf.train.adam(0.001),loss:'meanSquaredError'});
+  return m;
+}
+
+async function trainAndDeploy(){
+  const btn=document.getElementById('trn-btn'),mst=document.getElementById('mst');
+  const mpw=document.getElementById('mpw'),lcard=document.getElementById('log-card'),tlog=document.getElementById('tlog');
+  btn.disabled=true;mpw.style.display='block';lcard.style.display='block';tlog.innerHTML='';
+  setMS('Training…','pulse');setSt(mst,'info','Fetching training data from server…');
+  const log=msg=>{tlog.innerHTML+=msg+'<br>';tlog.scrollTop=tlog.scrollHeight;};
+  setP('mpl','mpf','Fetching training vectors…',5);
+  try{
+    const r=await fetch('/api/admin/model/train',{
+      method:'POST',headers:ah(),
+      body:JSON.stringify({source:document.getElementById('dsrc').value,min_tests:parseInt(document.getElementById('mintests').value)||5})
+    });
+    const d=await r.json();
+    if(!d.ok&&d.error){setSt(mst,'err',d.error);mpw.style.display='none';btn.disabled=false;setMS('Error','');return;}
+    log(`→ ${d.record_count} qualifying records from server`);
+    log(`→ Normalisation stats computed server-side`);
+    log('→ Training autoencoder neural network in browser…');
+    setP('mpl','mpf','Training neural network…',20);
+
+    const means=d.stats.means,stds=d.stats.stds;
+    const normRows=d.matrix.map(row=>row.map((v,i)=>(v-means[i])/(stds[i]||1)));
+    const xs=tf.tensor2d(normRows);
+    const model=buildAutoencoder();
+    const epochs=Math.min(300,Math.max(60,normRows.length*6));
+    await model.fit(xs,xs,{epochs,batchSize:Math.min(32,Math.max(4,Math.floor(normRows.length/2))),shuffle:true,
+      callbacks:{onEpochEnd:(ep)=>{setP('mpl','mpf',`Training: ${Math.round(ep/epochs*100)}%`,20+Math.round(ep/epochs*65));if(ep%50===0)log(`  Epoch ${ep}/${epochs}`);}}
+    });
+    xs.dispose();
+    log('→ Training complete. Sending weights to server…');
+    setP('mpl','mpf','Deploying…',88);
+
+    const weights=model.getWeights().map(w=>({data:Array.from(w.dataSync()),shape:w.shape}));
+    const dr=await fetch('/api/admin/model/deploy',{
+      method:'POST',headers:ah(),
+      body:JSON.stringify({weights,stats:{means,stds},training_size:d.record_count})
+    });
+    const dd=await dr.json();
+    log(`→ Model v${dd.version} deployed to server ✓`);
+    log('→ All users now receive ML scoring on their next upload');
+    setP('mpl','mpf','Done!',100);
+    await new Promise(r=>setTimeout(r,400));
+    mpw.style.display='none';
+    setSt(mst,'ok',`✓ Model v${dd.version} deployed. Trained on ${d.record_count} records.`);
+    setMS(`v${dd.version} live · ${d.record_count} records`,'on');
+    await loadModelInfo();document.getElementById('d-ver').textContent=`v${dd.version}`;
+  }catch(err){setSt(mst,'err','Error: '+err.message);log('✗ '+err.message);mpw.style.display='none';setMS('Error','');console.error(err);}
+  btn.disabled=false;
+}
+
+// ── USER UPLOADS ──────────────────────────────────────────────────
+async function loadUploads(){
+  const r=await fetch('/api/admin/uploads',{headers:ah()});const d=await r.json();
+  const docs=d.uploads||[];
+  document.getElementById('u-total').textContent=docs.length;
+  document.getElementById('u-flag').textContent=docs.filter(u=>(u.flagged_cnt||0)>0).length;
+  const tbody=document.getElementById('u-tbody');
+  if(!docs.length){tbody.innerHTML='<tr><td colspan="6" class="empty">No user uploads yet</td></tr>';return;}
+  tbody.innerHTML=docs.map((u,i)=>{
+    const dt=u.created_at?new Date(u.created_at).toLocaleString():'—';
+    const ml=u.ml_score!=null?u.ml_score:'—',mc=ml>60?'h':ml>30?'l':'n';
+    let vals={};try{vals=JSON.parse(u.values_json||'{}');}catch{}
+    const preview=Object.entries(vals).slice(0,3).map(([k,v])=>`${k}:${v}`).join(', ');
+    const allVals=Object.entries(vals).map(([k,v])=>`<span style="margin-right:12px">${k}:<strong style="color:var(--t1)">${v}</strong></span>`).join('');
+    return `<tr class="urow" onclick="toggleRow('ur${i}')">
+      <td style="font-family:var(--fm);font-size:12px">${(u.filename||'—').substring(0,25)}</td>
+      <td><span class="badge n">${u.val_count||0}</span></td>
+      <td><span class="badge ${(u.flagged_cnt||0)>0?'h':'n'}">${u.flagged_cnt||0}</span></td>
+      <td>${ml!=='—'?`<span class="badge ${mc}">${ml}</span>`:'—'}</td>
+      <td style="font-size:11px;color:var(--t3);font-family:var(--fm)">${dt}</td>
+      <td style="font-size:11px;color:var(--t3);font-family:var(--fm);max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${preview}</td>
+    </tr><tr class="udetail" id="ur${i}"><td colspan="6">${allVals||'No values'}</td></tr>`;
+  }).join('');
+}
+function toggleRow(id){const el=document.getElementById(id);el.style.display=el.style.display==='table-row'?'none':'table-row';}
+async function clearUploads(){
+  if(!confirm('Delete ALL user upload data?'))return;
+  await fetch('/api/admin/uploads/clear',{method:'DELETE',headers:ah()});
+  await loadUploads();
+}
+
+// ── RANGES ────────────────────────────────────────────────────────
+const RANGES_DATA={
+  "CBC":{Hemoglobin:"12–17.5 g/dL",WBC:"4–11 ×10³/µL",Platelets:"150–400 ×10³/µL","Neutrophils %":"40–75%","Lymphocytes %":"20–45%",MCV:"80–100 fL",MCH:"27–33 pg",RDW:"11.5–14.5%",ESR:"0–20 mm/hr",CRP:"0–1.0 mg/dL"},
+  "Thyroid":{TSH:"0.4–4.0 mIU/L","T3 Total":"80–200 ng/dL","T4 Total":"5–12 µg/dL","Free T3":"2.3–4.2 pg/mL","Free T4":"0.8–1.8 ng/dL"},
+  "Lipids":{"Total Cholesterol":"0–200 mg/dL","LDL Cholesterol":"0–100 mg/dL","HDL Cholesterol":">40 mg/dL",Triglycerides:"0–150 mg/dL"},
+  "Liver":{ALT:"0–40 U/L",AST:"0–40 U/L",ALP:"40–130 U/L",GGT:"0–60 U/L","Bilirubin Total":"0–1.2 mg/dL",Albumin:"3.5–5.0 g/dL"},
+  "Kidney":{Creatinine:"0.6–1.2 mg/dL",BUN:"7–25 mg/dL",eGFR:">60 mL/min","Uric Acid":"2.5–7.0 mg/dL",Sodium:"136–145 mEq/L",Potassium:"3.5–5.0 mEq/L",Calcium:"8.5–10.5 mg/dL"},
+  "Glucose":{" Fasting Glucose":"70–100 mg/dL",HbA1c:"0–5.6%"},
+  "Iron":{Ferritin:"12–300 ng/mL","Serum Iron":"60–170 µg/dL",TIBC:"250–370 µg/dL"},
+  "Vitamins":{"Vitamin B12":"200–900 pg/mL",Folate:"2.7–17 ng/mL","Vitamin D":"30–100 ng/mL"},
+};
+function renderRanges(){
+  const el=document.getElementById('ranges-body');
+  el.innerHTML=Object.entries(RANGES_DATA).map(([cat,tests])=>`
+    <div class="card" style="margin-bottom:14px">
+      <div class="ct">${cat}</div>
+      <table class="rt"><thead><tr><th>Test</th><th>Normal range</th></tr></thead>
+      <tbody>${Object.entries(tests).map(([n,r])=>`<tr><td>${n}</td><td style="font-family:var(--fm)">${r}</td></tr>`).join('')}</tbody>
+      </table>
+    </div>`).join('');
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────
+function setSt(el,type,msg){el.className=type?`st show ${type}`:'st';el.textContent=msg;}
+function setP(lbl,fill,txt,pct){document.getElementById(lbl).textContent=txt;document.getElementById(fill).style.width=pct+'%';}
+</script>
+</body>
+</html>

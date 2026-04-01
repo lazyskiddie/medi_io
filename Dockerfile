@@ -1,5 +1,6 @@
 FROM python:3.11-slim
 
+# Install Tesseract OCR + system deps
 RUN apt-get update && apt-get install -y \
     tesseract-ocr \
     tesseract-ocr-eng \
@@ -11,16 +12,20 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
+
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
+
+# Create dirs — /data will be overridden by Fly.io persistent volume at runtime
 RUN mkdir -p staticfiles static data
 
-# Collect static files — uses dummy SECRET_KEY, no DB needed here
+# Collect static files at build time (no DB needed)
 RUN SECRET_KEY=build-time-only-key python manage.py collectstatic --noinput --clear
 
-EXPOSE 8000
+EXPOSE 8080
 
-# migrate runs at startup against Supabase (DATABASE_URL env var must be set)
-CMD ["sh", "-c", "python manage.py migrate --noinput && gunicorn --bind 0.0.0.0:${PORT:-8000} --workers 2 --threads 4 --timeout 120 labai.wsgi:application"]
+# At container startup: run migrations then start gunicorn
+# Fly.io sets $PORT automatically (default 8080)
+CMD ["sh", "-c", "python manage.py migrate --noinput && gunicorn --bind 0.0.0.0:${PORT:-8080} --workers 2 --threads 4 --timeout 120 labai.wsgi:application"]

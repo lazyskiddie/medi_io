@@ -9,7 +9,6 @@ import logging
 import threading
 
 from django.conf import settings
-from django.db import models
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
@@ -199,66 +198,75 @@ def api_model_current(request):
 def _process_batch_job(job_id: int, files_data: list):
     """
     Background thread: OCR each image → update BatchItem records.
-    Uses Django ORM inside a manually managed connection so it works
-    with any database backend (SQLite locally, Postgres on Render/Supabase).
+    Uses direct sqlite3 connection (WAL mode) to avoid Django ORM
+    thread-safety issues with SQLite.
     """
-    import django.db
-    # Close any inherited connection — thread gets its own fresh one
-    django.db.connection.close()
+    import sqlite3 as _sqlite3
+    db_path = str(settings.DATABASES["default"]["NAME"])
+    conn = _sqlite3.connect(db_path, check_same_thread=False)
+    conn.execute("PRAGMA journal_mode=WAL")
 
     try:
-        BatchJob.objects.filter(id=job_id).update(status="running")
+        conn.execute("UPDATE batch_jobs SET status='running' WHERE id=?", (job_id,))
+        conn.commit()
 
         for filename, image_bytes in files_data:
-            BatchItem.objects.filter(job_id=job_id, filename=filename).update(
-                status="processing"
+            conn.execute(
+                "UPDATE batch_items SET status='processing' WHERE job_id=? AND filename=?",
+                (job_id, filename),
             )
+            conn.commit()
 
             try:
                 text   = ocr_image_bytes(image_bytes)
                 values = parse_lab_values(text)
 
                 if len(values) >= 2:
-                    BatchItem.objects.filter(
-                        job_id=job_id, filename=filename
-                    ).update(
-                        status="ready",
-                        val_count=len(values),
-                        values_json=json.dumps(values),
+                    conn.execute(
+                        "UPDATE batch_items SET status='ready', val_count=?, values_json=? "
+                        "WHERE job_id=? AND filename=?",
+                        (len(values), json.dumps(values), job_id, filename),
                     )
-                    BatchJob.objects.filter(id=job_id).update(
-                        processed=models.F("processed") + 1
+                    conn.execute(
+                        "UPDATE batch_jobs SET processed=processed+1 WHERE id=?",
+                        (job_id,),
                     )
                 else:
-                    BatchItem.objects.filter(
-                        job_id=job_id, filename=filename
-                    ).update(status="skipped")
-                    BatchJob.objects.filter(id=job_id).update(
-                        processed=models.F("processed") + 1,
-                        skipped=models.F("skipped") + 1,
+                    conn.execute(
+                        "UPDATE batch_items SET status='skipped' "
+                        "WHERE job_id=? AND filename=?",
+                        (job_id, filename),
                     )
+                    conn.execute(
+                        "UPDATE batch_jobs SET processed=processed+1, skipped=skipped+1 "
+                        "WHERE id=?",
+                        (job_id,),
+                    )
+                conn.commit()
 
             except Exception as e:
                 log.error(f"Batch item error [{filename}]: {e}")
-                BatchItem.objects.filter(
-                    job_id=job_id, filename=filename
-                ).update(status="failed", error=str(e)[:200])
-                BatchJob.objects.filter(id=job_id).update(
-                    processed=models.F("processed") + 1,
-                    failed=models.F("failed") + 1,
+                conn.execute(
+                    "UPDATE batch_items SET status='failed', error=? "
+                    "WHERE job_id=? AND filename=?",
+                    (str(e)[:200], job_id, filename),
                 )
-            finally:
-                # Close connection after each image to prevent Postgres
-                # idle connection timeout on long batches
-                django.db.connection.close()
+                conn.execute(
+                    "UPDATE batch_jobs SET processed=processed+1, failed=failed+1 "
+                    "WHERE id=?",
+                    (job_id,),
+                )
+                conn.commit()
 
-        BatchJob.objects.filter(id=job_id).update(status="done")
+        conn.execute("UPDATE batch_jobs SET status='done' WHERE id=?", (job_id,))
+        conn.commit()
 
     except Exception as e:
         log.error(f"Batch job {job_id} fatal error: {e}")
-        BatchJob.objects.filter(id=job_id).update(status="error")
+        conn.execute("UPDATE batch_jobs SET status='error' WHERE id=?", (job_id,))
+        conn.commit()
     finally:
-        django.db.connection.close()
+        conn.close()
 
 
 @csrf_exempt

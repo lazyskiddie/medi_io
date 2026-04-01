@@ -1,9 +1,8 @@
 """
 LabAI Django Settings
-Database: Supabase (free hosted Postgres) via DATABASE_URL
+Database: SQLite on Fly.io persistent volume (/data/labai.db)
 """
 import os
-import dj_database_url
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -46,35 +45,22 @@ TEMPLATES = [
 
 WSGI_APPLICATION = "labai.wsgi.application"
 
-# ── DATABASE — Supabase Postgres ──────────────────────────────────
-# Set DATABASE_URL in your Render environment variables.
-# Get it from: Supabase → Project → Settings → Database → URI
-# Format: postgresql://postgres:[PASSWORD]@db.[PROJECT].supabase.co:5432/postgres
-#
-# For local development without Supabase, falls back to SQLite.
+# ── DATABASE — SQLite on Fly.io persistent volume ─────────────────
+# Fly.io mounts a persistent volume at /data (configured in fly.toml)
+# DB_PATH env var is set in fly.toml: DB_PATH = "/data/labai.db"
+# Locally falls back to BASE_DIR/data/labai.db
+DB_PATH = os.environ.get("DB_PATH", str(BASE_DIR / "data" / "labai.db"))
+Path(DB_PATH).parent.mkdir(parents=True, exist_ok=True)
 
-_DATABASE_URL = os.environ.get("DATABASE_URL", "")
-
-if _DATABASE_URL:
-    DATABASES = {
-        "default": dj_database_url.config(
-            default=_DATABASE_URL,
-            conn_max_age=600,        # keep connections alive for 10 min
-            conn_health_checks=True, # auto-reconnect dropped connections
-            ssl_require=True,        # Supabase requires SSL
-        )
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": DB_PATH,
+        "OPTIONS": {
+            "timeout": 20,
+        },
     }
-else:
-    # Local fallback — SQLite for development without Supabase
-    _DB_PATH = BASE_DIR / "data" / "labai.db"
-    _DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    DATABASES = {
-        "default": {
-            "ENGINE": "django.db.backends.sqlite3",
-            "NAME": str(_DB_PATH),
-            "OPTIONS": {"timeout": 20},
-        }
-    }
+}
 
 # ── STATIC FILES ──────────────────────────────────────────────────
 STATIC_URL = "/static/"

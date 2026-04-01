@@ -1,0 +1,58 @@
+# fly.toml — Fly.io deployment config for LabAI Django
+# Generated for fly.io — edit app name after running `fly launch`
+
+app = "labai-app"          # Change this to your app name after fly launch
+primary_region = "sin"     # Singapore — closest to India
+
+[build]
+  dockerfile = "Dockerfile"
+
+# ── Persistent volume for SQLite database ──────────────────────────
+# This is what makes data survive deployments — Fly.io mounts
+# the volume at /data inside the container
+[[mounts]]
+  source      = "labai_data"   # volume name (created once with fly volumes create)
+  destination = "/data"
+  initial_size = "1gb"
+
+# ── Environment variables ──────────────────────────────────────────
+[env]
+  PORT        = "8080"
+  DB_PATH     = "/data/labai.db"
+  ALLOWED_HOSTS = "labai-app.fly.dev"   # update with your actual app name
+
+# ── HTTP service ───────────────────────────────────────────────────
+[[services]]
+  protocol    = "tcp"
+  internal_port = 8080
+
+  [[services.ports]]
+    port     = 80
+    handlers = ["http"]
+
+  [[services.ports]]
+    port     = 443
+    handlers = ["tls", "http"]
+
+  [services.concurrency]
+    type       = "connections"
+    hard_limit = 25
+    soft_limit = 20
+
+  [[services.tcp_checks]]
+    interval      = "15s"
+    timeout       = "2s"
+    grace_period  = "30s"
+
+  [[services.http_checks]]
+    interval    = "30s"
+    timeout     = "5s"
+    grace_period = "30s"
+    method      = "GET"
+    path        = "/health"
+
+# ── VM resources (free tier) ───────────────────────────────────────
+[[vm]]
+  memory   = "512mb"
+  cpu_kind = "shared"
+  cpus     = 1

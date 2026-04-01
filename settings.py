@@ -18,6 +18,7 @@ DEBUG = os.environ.get("DEBUG", "False") == "True"
 ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "*").split(",")
 
 INSTALLED_APPS = [
+    "django.contrib.contenttypes",
     "django.contrib.staticfiles",
     "core",
 ]

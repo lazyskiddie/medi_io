@@ -15,10 +15,12 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
-RUN mkdir -p /data staticfiles
+RUN mkdir -p staticfiles static data
 
-RUN python manage.py collectstatic --noinput
+# Collect static files — uses dummy SECRET_KEY, no DB needed here
+RUN SECRET_KEY=build-time-only-key python manage.py collectstatic --noinput --clear
 
 EXPOSE 8000
 
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "2", "--threads", "4", "--timeout", "120", "labai.wsgi:application"]
+# migrate runs at startup against Supabase (DATABASE_URL env var must be set)
+CMD ["sh", "-c", "python manage.py migrate --noinput && gunicorn --bind 0.0.0.0:${PORT:-8000} --workers 2 --threads 4 --timeout 120 labai.wsgi:application"]

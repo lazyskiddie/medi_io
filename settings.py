@@ -28,7 +28,7 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
 ]
 
-ROOT_URLCONF = "labai.urls"
+ROOT_URLCONF = "urls"
 
 TEMPLATES = [
     {
@@ -43,7 +43,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "labai.wsgi.application"
+WSGI_APPLICATION = "wsgi.application"
 
 # ── DATABASE — SQLite on Fly.io persistent volume ─────────────────
 # Fly.io mounts a persistent volume at /data (configured in fly.toml)

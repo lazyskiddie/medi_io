@@ -28,4 +28,4 @@ EXPOSE 8080
 
 # At container startup: run migrations then start gunicorn
 # Fly.io sets $PORT automatically (default 8080)
-CMD ["sh", "-c", "python manage.py migrate --noinput && gunicorn --bind 0.0.0.0:${PORT:-8080} --workers 2 --threads 4 --timeout 120 labai.wsgi:application"]
+CMD ["sh", "-c", "python manage.py migrate --noinput && gunicorn --bind 0.0.0.0:${PORT:-8080} --workers 2 --threads 4 --timeout 120 wsgi:application"]
